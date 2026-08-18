@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Syne", sans-serif;
+  --font-sans: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --color-brand-black: #0a0a0a;
+  --color-brand-surface: #121212;
+  --color-brand-border: #222222;
+  --color-brand-subtle: #737373;
+  --color-brand-accent: #e2ff66;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #0a0a0a;
+  color: #ffffff;
+}
+
+h1, h2, .font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Custom slick dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #404040;
+}
+
+/* Hide YouTube iframe completely from view while keeping it active in DOM */
+.yt-hidden-player {
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+  width: 200px;
+  height: 200px;
+  opacity: 0.01;
+  pointer-events: none;
+  z-index: -100;
+}
+
+/* Custom range slider styling for seekbar and volume */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  background-color: #ffffff;
+  border-radius: 9999px;
+  margin-top: -4px;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.3);
+  background-color: #e2ff66;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  background: #262626;
+  border-radius: 9999px;
+}
+
+/* Noise texture effect */
+.noise-overlay {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+

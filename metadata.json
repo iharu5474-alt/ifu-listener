@@ -1,0 +1,6 @@
+{
+  "name": "ifu listener",
+  "description": "A minimal, motion-forward music player streaming directly from YouTube audio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
