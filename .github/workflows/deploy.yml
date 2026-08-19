@@ -33,6 +33,9 @@ jobs:
         run: npm install
 
       - name: Build client application
+        env:
+          VITE_BASE_PATH: '/ifu-listener/'
+          VITE_YOUTUBE_API_KEY: ${{ secrets.VITE_YOUTUBE_API_KEY || secrets.YOUTUBE_API_KEY }}
         run: npm run build
 
       - name: Setup Pages

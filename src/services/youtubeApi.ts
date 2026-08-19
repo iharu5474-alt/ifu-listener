@@ -1,6 +1,14 @@
 import { ApiError, Playlist, SearchResultData, Track } from '../types';
 import { cleanTrackTitle, extractYouTubePlaylistId, extractYouTubeVideoId, parseYouTubeDuration, formatTime } from '../utils/formatters';
 
+export function getEffectiveApiKey(customApiKey?: string): string {
+  if (customApiKey && customApiKey.trim()) return customApiKey.trim();
+  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_YOUTUBE_API_KEY) {
+    return (import.meta as any).env.VITE_YOUTUBE_API_KEY;
+  }
+  return '';
+}
+
 /**
  * Fetches real-time live search suggestions with debounced quick matching.
  */
@@ -10,14 +18,15 @@ export async function fetchLiveSearchSuggestions(
 ): Promise<Track[]> {
   const trimmed = query.trim();
   if (!trimmed || trimmed.length < 2) return [];
+  const effectiveKey = getEffectiveApiKey(customApiKey);
 
   try {
     const headers: Record<string, string> = {};
-    if (customApiKey) {
-      headers['x-youtube-api-key'] = customApiKey;
+    if (effectiveKey) {
+      headers['x-youtube-api-key'] = effectiveKey;
     }
     const endpoint = `/api/youtube/suggestions?q=${encodeURIComponent(trimmed)}${
-      customApiKey ? `&key=${encodeURIComponent(customApiKey)}` : ''
+      effectiveKey ? `&key=${encodeURIComponent(effectiveKey)}` : ''
     }`;
     const res = await fetch(endpoint, { headers });
     if (res.ok) {
@@ -43,13 +52,14 @@ export async function searchYouTubeTracks(
     return { tracks: [], apiError: null };
   }
 
+  const effectiveKey = getEffectiveApiKey(customApiKey);
   console.log(`[ifu listener client] Initiating search for: "${trimmed}"`);
 
   // Direct video URL/ID detection
   const directVideoId = extractYouTubeVideoId(trimmed);
   if (directVideoId) {
     try {
-      const single = await fetchSingleTrack(directVideoId, customApiKey);
+      const single = await fetchSingleTrack(directVideoId, effectiveKey);
       if (single) {
         return {
           tracks: [single],
@@ -66,12 +76,12 @@ export async function searchYouTubeTracks(
   // Call the server API endpoint
   try {
     const headers: Record<string, string> = {};
-    if (customApiKey) {
-      headers['x-youtube-api-key'] = customApiKey;
+    if (effectiveKey) {
+      headers['x-youtube-api-key'] = effectiveKey;
     }
 
     const endpoint = `/api/youtube/search?q=${encodeURIComponent(trimmed)}${
-      customApiKey ? `&key=${encodeURIComponent(customApiKey)}` : ''
+      effectiveKey ? `&key=${encodeURIComponent(effectiveKey)}` : ''
     }`;
 
     const res = await fetch(endpoint, { headers });
@@ -79,7 +89,7 @@ export async function searchYouTubeTracks(
     // If backend endpoint is 404 (static hosting such as GitHub Pages)
     if (res.status === 404) {
       console.warn('[ifu listener] Backend API returned 404. Running client-side search (GitHub Pages static mode).');
-      return await clientSideDirectSearch(trimmed, customApiKey);
+      return await clientSideDirectSearch(trimmed, effectiveKey);
     }
 
     const data = await res.json();
