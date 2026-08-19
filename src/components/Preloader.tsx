@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Sparkles, Radio } from 'lucide-react';
 
 interface PreloaderProps {
@@ -9,11 +8,13 @@ interface PreloaderProps {
 export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    // 1.8 second smooth progression
+    // 1.5 second smooth progression
     const startTime = Date.now();
-    const duration = 1750;
+    const duration = 1500;
 
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -22,19 +23,21 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
 
       if (pct >= 100) {
         clearInterval(interval);
+        setIsFinished(true);
         setTimeout(() => {
-          setIsFinished(true);
-          setTimeout(onComplete, 450);
-        }, 150);
+          onCompleteRef.current();
+        }, 300);
       }
-    }, 35);
+    }, 30);
 
     return () => clearInterval(interval);
-  }, [onComplete]);
+  }, []);
 
   const handleSkip = () => {
     setIsFinished(true);
-    setTimeout(onComplete, 80);
+    setTimeout(() => {
+      onCompleteRef.current();
+    }, 50);
   };
 
   return (

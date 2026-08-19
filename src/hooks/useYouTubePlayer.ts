@@ -86,22 +86,26 @@ export function useYouTubePlayer({ onTrackEnd, onErrorNotification, onError }: U
       if (!hostElement || playerRef.current) return;
 
       try {
-        const origin = window.location.origin || 'http://localhost:3000';
+        const playerVars: Record<string, any> = {
+          autoplay: 0,
+          controls: 0,
+          disablekb: 1,
+          enablejsapi: 1,
+          fs: 0,
+          iv_load_policy: 3,
+          modestbranding: 1,
+          playsinline: 1,
+          rel: 0
+        };
+
+        if (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null') {
+          playerVars.origin = window.location.origin;
+        }
+
         playerRef.current = new window.YT.Player('youtube-player-host', {
           height: '200',
           width: '200',
-          playerVars: {
-            autoplay: 0,
-            controls: 0,
-            disablekb: 1,
-            enablejsapi: 1,
-            fs: 0,
-            iv_load_policy: 3,
-            modestbranding: 1,
-            playsinline: 1,
-            rel: 0,
-            origin: origin
-          },
+          playerVars,
           events: {
             onReady: onPlayerReady,
             onStateChange: onPlayerStateChange,
