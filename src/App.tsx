@@ -21,10 +21,14 @@ import { VisualizerView } from './views/VisualizerView';
 export default function App() {
   // Intro animation plays once per visit / session
   const [showPreloader, setShowPreloader] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return !sessionStorage.getItem('ifulistener_intro_played_v3');
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        return !sessionStorage.getItem('ifulistener_intro_played_v3');
+      }
+    } catch {
+      return false;
     }
-    return true;
+    return false;
   });
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('discover');
@@ -32,15 +36,23 @@ export default function App() {
 
   // Custom API key stored locally
   const [customApiKey, setCustomApiKey] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('ifulistener_custom_yt_key') || '';
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return localStorage.getItem('ifulistener_custom_yt_key') || '';
+      }
+    } catch {
+      return '';
     }
     return '';
   });
 
   const handleSaveCustomApiKey = (key: string) => {
     setCustomApiKey(key);
-    localStorage.setItem('ifulistener_custom_yt_key', key);
+    try {
+      localStorage.setItem('ifulistener_custom_yt_key', key);
+    } catch {
+      // ignore
+    }
     addToast('success', 'API Key Saved', 'Custom YouTube Data API v3 key saved locally.');
   };
 
@@ -282,11 +294,18 @@ export default function App() {
 
   // Play entire playlist
   const handlePlayPlaylist = useCallback(
-    (playlist: Playlist, startIndex = 0) => {
+    (playlist: Playlist, startIndexOrShuffle: number | boolean = 0) => {
       if (playlist.tracks.length === 0) {
         addToast('info', 'Empty Playlist', 'Add tracks to this playlist first.');
         return;
       }
+      if (typeof startIndexOrShuffle === 'boolean' && startIndexOrShuffle) {
+        const shuffled = [...playlist.tracks].sort(() => Math.random() - 0.5);
+        playTrack(shuffled[0], shuffled.slice(1), playlist.id);
+        addToast('success', 'Shuffled Playlist', `${playlist.title} (${playlist.tracks.length} tracks)`);
+        return;
+      }
+      const startIndex = typeof startIndexOrShuffle === 'number' ? startIndexOrShuffle : 0;
       const firstTrack = playlist.tracks[startIndex] || playlist.tracks[0];
       const remainingTracks = [
         ...playlist.tracks.slice(startIndex + 1),
@@ -366,7 +385,13 @@ export default function App() {
   }, [togglePlay, handleNextTrack, handlePrevTrack, seekTo, toggleMute, playerState.duration, playerState.currentTime]);
 
   const handlePreloaderDone = () => {
-    sessionStorage.setItem('ifulistener_intro_played_v3', 'true');
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        sessionStorage.setItem('ifulistener_intro_played_v3', 'true');
+      }
+    } catch {
+      // ignore
+    }
     setShowPreloader(false);
   };
 
