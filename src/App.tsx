@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActiveTab, Playlist, Track } from './types';
 import { useYouTubePlayer } from './hooks/useYouTubePlayer';
 import { useMusicLibrary } from './hooks/useMusicLibrary';
+import { useRecommendations } from './hooks/useRecommendations';
 import { fetchRelatedYouTubeTracks } from './services/youtubeApi';
+import { recordSearch, recordInteractionClick } from './services/recommendationEngine';
 import { Navbar } from './components/Navbar';
 import { PlayerBar } from './components/PlayerBar';
 import { Preloader } from './components/Preloader';
@@ -90,6 +92,46 @@ export default function App() {
     importYouTubePlaylist
   } = useMusicLibrary();
 
+  // Recommendation Engine hook
+  const {
+    recommendations,
+    userProfile,
+    isLoading: isLoadingRecommendations,
+    refreshRecommendations,
+    handleDislikeTrack,
+    trackPlayStart,
+    trackPlayProgress,
+    trackSkip,
+    trackLike
+  } = useRecommendations(favorites, customApiKey);
+
+  // Refs to decouple circular dependencies
+  const handleNextTrackRef = useRef<() => void>(() => {});
+  const handlePlayerErrorRef = useRef<(code: number, msg: string) => void>(() => {});
+
+  // YouTube Player hook
+  const {
+    playerState,
+    playTrack,
+    togglePlay,
+    seekTo,
+    setVolume,
+    toggleMute,
+    toggleShuffle,
+    toggleAutoplay,
+    setAutoplay,
+    setSuggestedTrack,
+    cycleRepeatMode,
+    setPlaybackRate,
+    addToQueue,
+    removeFromQueue,
+    clearQueue,
+    setQueue
+  } = useYouTubePlayer({
+    onTrackEnd: () => handleNextTrackRef.current(),
+    onError: (code, msg) => handlePlayerErrorRef.current(code, msg)
+  });
+
   // Ref to hold pool of auto-suggested tracks
   const suggestedPoolRef = useRef<Track[]>([]);
 
@@ -97,6 +139,8 @@ export default function App() {
   const stateRef = useRef<{
     queue: Track[];
     currentTrack: Track | null;
+    currentTime: number;
+    duration: number;
     repeatMode: 'off' | 'all' | 'one';
     shuffle: boolean;
     autoplay: boolean;
@@ -105,6 +149,8 @@ export default function App() {
   }>({
     queue: [],
     currentTrack: null,
+    currentTime: 0,
+    duration: 0,
     repeatMode: 'off',
     shuffle: false,
     autoplay: true,
@@ -114,10 +160,16 @@ export default function App() {
 
   // Track next handler with Autoplay logic
   const handleNextTrack = useCallback(async () => {
-    const { queue, currentTrack, repeatMode, shuffle, autoplay, suggestedTrack, history } = stateRef.current;
+    const { queue, currentTrack, currentTime, duration, repeatMode, shuffle, autoplay, suggestedTrack, history } = stateRef.current;
+
+    // Record skip if track was advanced before completion
+    if (currentTrack && currentTime > 0 && currentTime < (duration * 0.75 || 120)) {
+      trackSkip(currentTrack, currentTime, duration || 210);
+    }
 
     if (repeatMode === 'one' && currentTrack) {
       playTrack(currentTrack);
+      trackPlayStart(currentTrack);
       return;
     }
 
@@ -135,6 +187,7 @@ export default function App() {
       }
 
       playTrack(nextTrack, nextQueue);
+      trackPlayStart(nextTrack);
       return;
     }
 
@@ -166,6 +219,7 @@ export default function App() {
         setSuggestedTrack(suggestedPoolRef.current[0] || null);
 
         playTrack(candidate);
+        trackPlayStart(candidate);
         addToast('info', 'Autoplay: Up Next', `${candidate.title} • ${candidate.artist}`);
         return;
       }
@@ -173,7 +227,7 @@ export default function App() {
 
     // Queue is empty and Autoplay is off / exhausted
     addToast('info', 'End of Queue', 'Queue finished. Toggle Autoplay for continuous playback.');
-  }, [customApiKey, addToast]);
+  }, [customApiKey, addToast, playTrack, trackPlayStart, trackSkip, setSuggestedTrack]);
 
   // Track error handler (with auto-skip for autoplay recommendations)
   const handlePlayerError = useCallback((errorCode: number, errorMessage: string) => {
@@ -194,34 +248,26 @@ export default function App() {
     }, 1800);
   }, [handleNextTrack, addToast]);
 
-  // YouTube Player hook
-  const {
-    playerState,
-    playTrack,
-    togglePlay,
-    seekTo,
-    setVolume,
-    toggleMute,
-    toggleShuffle,
-    toggleAutoplay,
-    setAutoplay,
-    setSuggestedTrack,
-    cycleRepeatMode,
-    setPlaybackRate,
-    addToQueue,
-    removeFromQueue,
-    clearQueue,
-    setQueue
-  } = useYouTubePlayer({
-    onTrackEnd: handleNextTrack,
-    onError: handlePlayerError
-  });
+  // Keep callback refs updated
+  useEffect(() => {
+    handleNextTrackRef.current = handleNextTrack;
+    handlePlayerErrorRef.current = handlePlayerError;
+  }, [handleNextTrack, handlePlayerError]);
+
+  // Track listen progress for recommendation engine
+  useEffect(() => {
+    if (playerState.currentTrack && playerState.isPlaying && playerState.currentTime > 0) {
+      trackPlayProgress(playerState.currentTrack, playerState.currentTime, playerState.duration);
+    }
+  }, [playerState.currentTrack, playerState.isPlaying, playerState.currentTime, playerState.duration, trackPlayProgress]);
 
   // Keep stateRef synced
   useEffect(() => {
     stateRef.current = {
       queue: playerState.queue,
       currentTrack: playerState.currentTrack,
+      currentTime: playerState.currentTime,
+      duration: playerState.duration,
       repeatMode: playerState.repeatMode,
       shuffle: playerState.shuffle,
       autoplay: playerState.autoplay,
@@ -231,6 +277,8 @@ export default function App() {
   }, [
     playerState.queue,
     playerState.currentTrack,
+    playerState.currentTime,
+    playerState.duration,
     playerState.repeatMode,
     playerState.shuffle,
     playerState.autoplay,
@@ -277,6 +325,7 @@ export default function App() {
   // Play single track with queue
   const handlePlaySingleTrack = useCallback(
     (track: Track, contextQueue?: Track[]) => {
+      trackPlayStart(track);
       if (contextQueue && contextQueue.length > 0) {
         const trackIndex = contextQueue.findIndex((t) => t.id === track.id);
         const newQueue =
@@ -289,7 +338,7 @@ export default function App() {
       }
       addToast('info', 'Now Playing', `${track.title} • ${track.artist}`);
     },
-    [playTrack, addToast]
+    [playTrack, addToast, trackPlayStart]
   );
 
   // Play entire playlist
@@ -301,6 +350,7 @@ export default function App() {
       }
       if (typeof startIndexOrShuffle === 'boolean' && startIndexOrShuffle) {
         const shuffled = [...playlist.tracks].sort(() => Math.random() - 0.5);
+        trackPlayStart(shuffled[0]);
         playTrack(shuffled[0], shuffled.slice(1), playlist.id);
         addToast('success', 'Shuffled Playlist', `${playlist.title} (${playlist.tracks.length} tracks)`);
         return;
@@ -311,10 +361,11 @@ export default function App() {
         ...playlist.tracks.slice(startIndex + 1),
         ...playlist.tracks.slice(0, startIndex)
       ];
+      trackPlayStart(firstTrack);
       playTrack(firstTrack, remainingTracks, playlist.id);
       addToast('success', 'Playing Playlist', `${playlist.title} (${playlist.tracks.length} tracks)`);
     },
-    [playTrack, addToast]
+    [playTrack, addToast, trackPlayStart]
   );
 
   // Previous track handler
@@ -323,24 +374,26 @@ export default function App() {
       seekTo(0);
     } else if (playerState.history.length > 0) {
       const prevTrack = playerState.history[0];
+      trackPlayStart(prevTrack);
       playTrack(prevTrack);
     } else {
       seekTo(0);
     }
-  }, [playerState.currentTime, playerState.history, playTrack, seekTo]);
+  }, [playerState.currentTime, playerState.history, playTrack, seekTo, trackPlayStart]);
 
-  // Toggle favorite with feedback toast
+  // Toggle favorite with feedback toast & recommendation engine tracking
   const handleToggleFavorite = useCallback(
     (track: Track) => {
       const isFav = isFavorite(track.id);
       toggleFavorite(track);
+      trackLike(track, !isFav);
       if (isFav) {
         addToast('info', 'Removed from Liked Songs', track.title);
       } else {
         addToast('success', 'Added to Liked Songs', track.title);
       }
     },
-    [isFavorite, toggleFavorite, addToast]
+    [isFavorite, toggleFavorite, trackLike, addToast]
   );
 
   // Add to queue with toast
@@ -410,29 +463,52 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070707] text-white flex flex-col noise-overlay selection:bg-[#E2FF66] selection:text-black">
+    <div className="min-h-screen bg-[#070707] text-white flex flex-col noise-overlay selection:bg-[#E2FF66] selection:text-black relative">
       
       {/* Hidden YouTube IFrame Player */}
       <div id="youtube-player-host" className="yt-hidden-player" />
+
+      {/* Fullscreen Looping Video Background Behind Hero Content & Nav */}
+      <div
+        id="hero-video-background-layer"
+        className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none z-0 bg-black"
+        style={{ backgroundColor: '#000000' }}
+      >
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full h-full object-cover opacity-80"
+          style={{
+            filter: 'brightness(1.15) contrast(1.1) saturate(1.15)',
+            WebkitFilter: 'brightness(1.15) contrast(1.1) saturate(1.15)'
+          }}
+          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_055001_8e16d972-3b2b-441c-86ad-2901a54682f9.mp4"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/85" />
+      </div>
 
       {/* Intro Preloader Animation (Plays once per visit) */}
       {showPreloader && <Preloader onComplete={handlePreloaderDone} />}
 
       {/* Main Navbar */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={(tab) => {
-          setActiveTab(tab);
-          if (tab !== 'playlists') setSelectedPlaylist(null);
-        }}
-        playerState={playerState}
-        favoritesCount={favorites.length}
-        queueCount={playerState.queue.length}
-        onOpenImportModal={() => setIsImportModalOpen(true)}
-      />
+      <div className="relative z-10">
+        <Navbar
+          activeTab={activeTab}
+          setActiveTab={(tab) => {
+            setActiveTab(tab);
+            if (tab !== 'playlists') setSelectedPlaylist(null);
+          }}
+          playerState={playerState}
+          favoritesCount={favorites.length}
+          queueCount={playerState.queue.length}
+          onOpenImportModal={() => setIsImportModalOpen(true)}
+        />
+      </div>
 
       {/* Main Content Area with Smooth Route Transitions */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-40">
+      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-40">
         <div key={activeTab} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
           {activeTab === 'discover' && (
               <DiscoverView
@@ -441,6 +517,11 @@ export default function App() {
                 currentTrack={playerState.currentTrack}
                 isPlaying={playerState.isPlaying}
                 isFavorite={isFavorite}
+                recommendations={recommendations}
+                userProfile={userProfile}
+                isLoadingRecommendations={isLoadingRecommendations}
+                onRefreshRecommendations={() => refreshRecommendations(true)}
+                onDislikeTrack={handleDislikeTrack}
                 onPlayTrack={handlePlaySingleTrack}
                 onPlayPlaylist={handlePlayPlaylist}
                 onToggleFavorite={handleToggleFavorite}

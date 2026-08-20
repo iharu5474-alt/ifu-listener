@@ -66,3 +66,46 @@ export interface SearchResultData {
 }
 
 export type ActiveTab = 'discover' | 'search' | 'playlists' | 'favorites' | 'queue' | 'visualizer';
+
+export interface TrackInteraction {
+  trackId: string;
+  title: string;
+  artist: string;
+  genreTags: string[];
+  plays: number;
+  listenDurationSeconds: number;
+  totalDurationSeconds: number;
+  completionRate: number; // 0 to 1
+  skips: number;
+  likes: number; // 1 if liked, 0 otherwise
+  dislikes: number; // 1 if disliked / dismissed
+  repeatPlays: number;
+  lastPlayedAt: number;
+  timeOfDayCounts: {
+    morning: number;
+    afternoon: number;
+    evening: number;
+    night: number;
+  };
+}
+
+export interface UserInterestProfile {
+  topArtists: { artist: string; score: number; playCount: number; skipCount: number }[];
+  topGenres: { genre: string; score: number }[];
+  topKeywords: { keyword: string; count: number }[];
+  totalListens: number;
+  totalCompletions: number;
+  totalSkips: number;
+  averageCompletionRate: number;
+  preferredTimeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
+  updatedAt: number;
+}
+
+export interface RankedTrack extends Track {
+  score: number;
+  matchReason?: string;
+  matchScorePercentage?: number;
+  tags?: string[];
+  disliked?: boolean;
+}
+

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ApiError, Track } from '../types';
 import { checkYouTubeApiStatus, fetchLiveSearchSuggestions, searchYouTubeTracks } from '../services/youtubeApi';
+import { recordSearch } from '../services/recommendationEngine';
 import { TrackRow } from '../components/TrackRow';
 import { TiltCard } from '../components/TiltCard';
 import {
@@ -148,6 +149,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
   const executeSearch = async (queryText: string) => {
     const trimmed = queryText.trim();
     if (!trimmed) return;
+
+    recordSearch(trimmed);
 
     setShowSuggestions(false);
     setIsLoading(true);

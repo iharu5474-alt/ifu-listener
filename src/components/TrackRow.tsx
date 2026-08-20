@@ -34,8 +34,8 @@ export const TrackRow: React.FC<TrackRowProps> = ({
       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
       className={`group relative flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 border ${
         isCurrent
-          ? 'bg-neutral-900/95 border-[#E2FF66]/50 shadow-md shadow-[#E2FF66]/5'
-          : 'bg-neutral-950/40 hover:bg-neutral-900/70 border-neutral-900/80 hover:border-neutral-800'
+          ? 'bg-white/15 border-[#E2FF66]/60 shadow-md'
+          : 'bg-black/30 hover:bg-black/50 border-white/10 hover:border-white/20'
       }`}
     >
       {/* Left: Index / Play status & Thumbnail & Info */}

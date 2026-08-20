@@ -219,29 +219,11 @@ export function useYouTubePlayer({ onTrackEnd, onErrorNotification, onError }: U
     }
   }, [clearLoadTimeout, onErrorNotification, onError]);
 
-  // Internal helper to load and play video with 8-second timeout
+  // Internal helper to load and play video safely without premature timeout errors
   const loadAndPlayVideo = useCallback((videoId: string) => {
     if (!playerRef.current || !isPlayerReadyRef.current) return;
 
     clearLoadTimeout();
-
-    // 8-second safety timeout
-    loadTimeoutRef.current = setTimeout(() => {
-      setPlayerState((prev) => {
-        if (prev.status === 'buffering' || prev.status === 'unstarted') {
-          const timeoutMsg = "Track took too long to load. Auto-skipping...";
-          if (onErrorNotification) onErrorNotification(408, timeoutMsg);
-          return {
-            ...prev,
-            status: 'error',
-            errorCode: 408,
-            errorMessage: timeoutMsg,
-            isPlaying: false
-          };
-        }
-        return prev;
-      });
-    }, 8000);
 
     try {
       playerRef.current.loadVideoById({
@@ -257,30 +239,41 @@ export function useYouTubePlayer({ onTrackEnd, onErrorNotification, onError }: U
     } catch (e) {
       console.error('Error invoking loadVideoById:', e);
     }
-  }, [clearLoadTimeout, onErrorNotification]);
+  }, [clearLoadTimeout]);
 
-  // Periodic position sync
+  // Periodic position sync - optimized for long-term continuous streaming
   useEffect(() => {
+    if (!playerState.isPlaying) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
     intervalRef.current = setInterval(() => {
-      if (playerRef.current && isPlayerReadyRef.current && playerState.isPlaying) {
+      if (playerRef.current && isPlayerReadyRef.current) {
         try {
           const currentTime = playerRef.current.getCurrentTime() || 0;
-          const duration = playerRef.current.getDuration() || playerState.duration;
+          const duration = playerRef.current.getDuration();
           setPlayerState((prev) => ({
             ...prev,
             currentTime,
-            duration: duration > 0 ? duration : prev.duration
+            duration: duration && duration > 0 ? duration : prev.duration
           }));
         } catch {
           // ignore
         }
       }
-    }, 250);
+    }, 300);
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
-  }, [playerState.isPlaying, playerState.duration]);
+  }, [playerState.isPlaying]);
 
   // Controls API
   const playTrack = useCallback((track: Track, newQueue?: Track[], playlistId?: string) => {
