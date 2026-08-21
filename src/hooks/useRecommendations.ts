@@ -4,6 +4,7 @@ import {
   buildUserProfile,
   computePersonalizedRecommendations,
   getDislikedTrackIds,
+  recordCompletion,
   recordDislike,
   recordLike,
   recordPlayProgress,
@@ -55,6 +56,7 @@ export function useRecommendations(favorites: Track[], customApiKey?: string) {
     handleDislikeTrack,
     trackPlayStart: recordPlayStart,
     trackPlayProgress: recordPlayProgress,
+    trackCompletion: recordCompletion,
     trackSkip: recordSkip,
     trackLike: recordLike
   };

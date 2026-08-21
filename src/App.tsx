@@ -4,34 +4,23 @@ import { useYouTubePlayer } from './hooks/useYouTubePlayer';
 import { useMusicLibrary } from './hooks/useMusicLibrary';
 import { useRecommendations } from './hooks/useRecommendations';
 import { fetchRelatedYouTubeTracks } from './services/youtubeApi';
-import { recordSearch, recordInteractionClick } from './services/recommendationEngine';
 import { Navbar } from './components/Navbar';
 import { PlayerBar } from './components/PlayerBar';
 import { Preloader } from './components/Preloader';
 import { Toast, ToastMessage } from './components/Toast';
 import { ImportPlaylistModal } from './components/ImportPlaylistModal';
 import { AddToPlaylistModal } from './components/AddToPlaylistModal';
-import { QueueDrawer } from './components/QueueDrawer';
 import { FullscreenPlayerModal } from './components/FullscreenPlayerModal';
+import { QueueDrawer } from './components/QueueDrawer';
 import { DiscoverView } from './views/DiscoverView';
 import { SearchView } from './views/SearchView';
 import { PlaylistsView } from './views/PlaylistsView';
 import { FavoritesView } from './views/FavoritesView';
-import { QueueView } from './views/QueueView';
 import { VisualizerView } from './views/VisualizerView';
 
 export default function App() {
-  // Intro animation plays once per visit / session
-  const [showPreloader, setShowPreloader] = useState(() => {
-    try {
-      if (typeof window !== 'undefined' && window.sessionStorage) {
-        return !sessionStorage.getItem('ifulistener_intro_played_v3');
-      }
-    } catch {
-      return false;
-    }
-    return false;
-  });
+  // Opening video splash intro plays on load with smooth fade
+  const [showPreloader, setShowPreloader] = useState(true);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('discover');
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
@@ -58,11 +47,11 @@ export default function App() {
     addToast('success', 'API Key Saved', 'Custom YouTube Data API v3 key saved locally.');
   };
 
-  // Modals & Drawers state
+  // Modals state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [trackToAddToPlaylist, setTrackToAddToPlaylist] = useState<Track | null>(null);
-  const [isQueueDrawerOpen, setIsQueueDrawerOpen] = useState(false);
   const [isFullscreenPlayerOpen, setIsFullscreenPlayerOpen] = useState(false);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
 
   // Toast stack
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -502,8 +491,9 @@ export default function App() {
           }}
           playerState={playerState}
           favoritesCount={favorites.length}
-          queueCount={playerState.queue.length}
           onOpenImportModal={() => setIsImportModalOpen(true)}
+          recommendations={recommendations}
+          onPlayTrack={handlePlaySingleTrack}
         />
       </div>
 
@@ -520,6 +510,7 @@ export default function App() {
                 recommendations={recommendations}
                 userProfile={userProfile}
                 isLoadingRecommendations={isLoadingRecommendations}
+                customApiKey={customApiKey}
                 onRefreshRecommendations={() => refreshRecommendations(true)}
                 onDislikeTrack={handleDislikeTrack}
                 onPlayTrack={handlePlaySingleTrack}
@@ -531,22 +522,7 @@ export default function App() {
                   setSelectedPlaylist(pl);
                   setActiveTab('playlists');
                 }}
-                onOpenSearch={() => setActiveTab('search')}
                 onOpenImportModal={() => setIsImportModalOpen(true)}
-              />
-            )}
-
-            {activeTab === 'search' && (
-              <SearchView
-                currentTrack={playerState.currentTrack}
-                isPlaying={playerState.isPlaying}
-                isFavorite={isFavorite}
-                customApiKey={customApiKey}
-                onSaveCustomApiKey={handleSaveCustomApiKey}
-                onPlayTrack={handlePlaySingleTrack}
-                onToggleFavorite={handleToggleFavorite}
-                onAddToQueue={handleAddToQueue}
-                onOpenAddToPlaylist={(t) => setTrackToAddToPlaylist(t)}
               />
             )}
 
@@ -587,24 +563,6 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'queue' && (
-              <QueueView
-                playerState={playerState}
-                isFavorite={isFavorite}
-                onPlayTrack={(t) => handlePlaySingleTrack(t)}
-                onRemoveFromQueue={removeFromQueue}
-                onClearQueue={() => {
-                  clearQueue();
-                  addToast('info', 'Queue cleared');
-                }}
-                onToggleFavorite={handleToggleFavorite}
-                onAddToQueue={handleAddToQueue}
-                onOpenAddToPlaylist={(t) => setTrackToAddToPlaylist(t)}
-                onToggleAutoplay={toggleAutoplay}
-                suggestedTracks={suggestedPoolRef.current}
-              />
-            )}
-
             {activeTab === 'visualizer' && (
               <VisualizerView
                 playerState={playerState}
@@ -631,25 +589,23 @@ export default function App() {
         onCycleRepeat={cycleRepeatMode}
         onSetPlaybackRate={setPlaybackRate}
         onToggleFavorite={handleToggleFavorite}
-        onToggleQueueDrawer={() => setIsQueueDrawerOpen(!isQueueDrawerOpen)}
         onOpenFullscreen={handleOpenFullscreenModal}
         onPlaySuggestedTrack={(t) => handlePlaySingleTrack(t)}
+        onToggleQueue={() => setIsQueueOpen((prev) => !prev)}
+        isQueueOpen={isQueueOpen}
       />
 
-      {/* Queue Drawer */}
+      {/* Fresh Queue / Now Playing Drawer */}
       <QueueDrawer
-        isOpen={isQueueDrawerOpen}
-        onClose={() => setIsQueueDrawerOpen(false)}
+        isOpen={isQueueOpen}
+        onClose={() => setIsQueueOpen(false)}
         playerState={playerState}
-        onPlayTrack={(t) => handlePlaySingleTrack(t)}
+        onPlayTrack={handlePlaySingleTrack}
         onRemoveFromQueue={removeFromQueue}
-        onClearQueue={() => {
-          clearQueue();
-          addToast('info', 'Queue cleared');
-        }}
+        onClearQueue={clearQueue}
         onToggleAutoplay={toggleAutoplay}
         onAddToQueue={handleAddToQueue}
-        suggestedTracks={suggestedPoolRef.current}
+        suggestedTracks={recommendations}
       />
 
       {/* Fullscreen Player Modal */}

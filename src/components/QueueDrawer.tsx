@@ -69,15 +69,16 @@ export const QueueDrawer: React.FC<QueueDrawerProps> = ({
             {queue.length > 0 && (
               <button
                 onClick={onClearQueue}
-                className="p-1.5 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-neutral-900 transition-colors"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-xl text-neutral-400 hover:text-red-400 hover:bg-neutral-900 active:scale-95 transition-all cursor-pointer"
                 title="Clear Queue"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-5 h-5" />
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-900 transition-colors"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-900 active:scale-95 transition-all cursor-pointer"
+              title="Close Queue"
             >
               <X className="w-5 h-5" />
             </button>
@@ -86,7 +87,7 @@ export const QueueDrawer: React.FC<QueueDrawerProps> = ({
 
         {/* Autoplay Toggle Bar */}
         {onToggleAutoplay && (
-          <div className="px-5 py-3 bg-neutral-950/80 border-b border-neutral-900 flex items-center justify-between">
+          <div className="px-5 py-3.5 bg-neutral-950/80 border-b border-neutral-900 flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Sparkles className={`w-4 h-4 ${autoplay ? 'text-[#E2FF66]' : 'text-neutral-500'}`} />
               <div>
@@ -101,14 +102,14 @@ export const QueueDrawer: React.FC<QueueDrawerProps> = ({
 
             <button
               onClick={onToggleAutoplay}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                 autoplay ? 'bg-[#E2FF66]' : 'bg-neutral-800'
               }`}
               title={`Toggle Autoplay: ${autoplay ? 'ON' : 'OFF'}`}
             >
               <span
-                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-black shadow ring-0 transition duration-200 ease-in-out ${
-                  autoplay ? 'translate-x-4' : 'translate-x-0 bg-neutral-400'
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-black shadow ring-0 transition duration-200 ease-in-out ${
+                  autoplay ? 'translate-x-5' : 'translate-x-0 bg-neutral-400'
                 }`}
               />
             </button>
@@ -142,11 +143,11 @@ export const QueueDrawer: React.FC<QueueDrawerProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-sans font-bold text-sm text-white truncate">
+                <div className="min-w-0 flex-1 pr-2">
+                  <h4 className="font-sans font-bold text-sm text-white truncate" title={currentTrack.title}>
                     {currentTrack.title}
                   </h4>
-                  <p className="font-mono text-xs text-neutral-400 truncate">
+                  <p className="font-mono text-xs text-neutral-300 truncate mt-0.5">
                     {currentTrack.artist}
                   </p>
                 </div>
@@ -190,34 +191,34 @@ export const QueueDrawer: React.FC<QueueDrawerProps> = ({
                       onClick={() => onPlayTrack(track)}
                       className="flex items-center space-x-3 min-w-0 flex-1 cursor-pointer"
                     >
-                      <span className="font-mono text-xs text-neutral-600 w-5 text-center shrink-0">
+                      <span className="font-mono text-xs text-neutral-500 w-5 text-center shrink-0 font-medium">
                         {idx + 1}
                       </span>
                       <img
                         src={track.thumbnailUrl}
                         alt={track.title}
-                        className="w-9 h-9 rounded-lg object-cover shrink-0"
+                        className="w-10 h-10 rounded-lg object-cover shrink-0"
                         referrerPolicy="no-referrer"
                       />
                       <div className="min-w-0 flex-1 pr-2">
-                        <h5 className="font-sans font-semibold text-xs text-white truncate group-hover:text-[#E2FF66]">
+                        <h5 className="font-sans font-bold text-xs sm:text-sm text-white truncate group-hover:text-[#E2FF66]" title={track.title}>
                           {track.title}
                         </h5>
-                        <p className="font-mono text-[11px] text-neutral-400 truncate">
+                        <p className="font-mono text-[11px] text-neutral-300 truncate mt-0.5">
                           {track.artist}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2 shrink-0">
+                    <div className="flex items-center space-x-1.5 shrink-0">
                       <button
                         onClick={() => onRemoveFromQueue(idx)}
-                        className="p-1 text-neutral-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="min-w-[40px] min-h-[40px] flex items-center justify-center p-2 rounded-lg text-neutral-400 hover:text-red-400 transition-colors cursor-pointer"
                         title="Remove from queue"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                      <span className="font-mono text-xs text-neutral-500">
+                      <span className="font-mono text-xs text-neutral-400 pl-1">
                         {formatTime(track.duration)}
                       </span>
                     </div>
@@ -252,7 +253,7 @@ export const QueueDrawer: React.FC<QueueDrawerProps> = ({
                       onClick={() => onPlayTrack(track)}
                       className="flex items-center space-x-3 min-w-0 flex-1 cursor-pointer"
                     >
-                      <div className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0">
+                      <div className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0">
                         <img
                           src={track.thumbnailUrl}
                           alt={track.title}
@@ -267,37 +268,37 @@ export const QueueDrawer: React.FC<QueueDrawerProps> = ({
                       </div>
                       <div className="min-w-0 flex-1 pr-2">
                         <div className="flex items-center space-x-1.5">
-                          <h5 className="font-sans font-semibold text-xs text-neutral-200 truncate group-hover:text-white">
+                          <h5 className="font-sans font-bold text-xs sm:text-sm text-neutral-200 truncate group-hover:text-[#E2FF66]" title={track.title}>
                             {track.title}
                           </h5>
                           {idx === 0 && queue.length === 0 && (
-                            <span className="px-1 py-0.2 rounded text-[8px] font-mono bg-[#E2FF66]/20 text-[#E2FF66] shrink-0">
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-mono bg-[#E2FF66]/20 text-[#E2FF66] font-bold shrink-0">
                               NEXT
                             </span>
                           )}
                         </div>
-                        <p className="font-mono text-[10px] text-neutral-400 truncate">
+                        <p className="font-mono text-[11px] text-neutral-300 truncate mt-0.5">
                           {track.artist}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-1.5 shrink-0">
+                    <div className="flex items-center space-x-1 shrink-0">
                       {onAddToQueue && (
                         <button
                           onClick={() => onAddToQueue(track)}
-                          className="p-1 rounded text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+                          className="min-w-[40px] min-h-[40px] flex items-center justify-center p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
                           title="Add to queue"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-4 h-4" />
                         </button>
                       )}
                       <button
                         onClick={() => onPlayTrack(track)}
-                        className="p-1 rounded text-[#E2FF66] hover:bg-[#E2FF66]/10 transition-colors"
+                        className="min-w-[40px] min-h-[40px] flex items-center justify-center p-2 rounded-lg text-[#E2FF66] hover:bg-[#E2FF66]/10 transition-colors cursor-pointer"
                         title="Play now"
                       >
-                        <Play className="w-3.5 h-3.5 fill-current" />
+                        <Play className="w-4 h-4 fill-current" />
                       </button>
                     </div>
                   </div>

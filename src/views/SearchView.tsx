@@ -422,7 +422,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
       {/* Main Search Bar Input with Live Suggestions Dropdown */}
       <div ref={searchContainerRef} className="relative w-full max-w-3xl z-30">
         <form onSubmit={handleSubmit} className="relative flex items-center">
-          <Search className="absolute left-5 w-5 h-5 text-neutral-500 pointer-events-none" />
+          <Search className="absolute left-4 sm:left-5 w-4 h-4 sm:w-5 sm:h-5 text-neutral-400 pointer-events-none" />
           <input
             type="text"
             id="search-input"
@@ -433,14 +433,14 @@ export const SearchView: React.FC<SearchViewProps> = ({
             }}
             onKeyDown={handleKeyDown}
             placeholder="Search tracks, artists, genres or paste YouTube URL / ID..."
-            className="w-full pl-14 pr-32 py-4 bg-neutral-950 border border-neutral-800 focus:border-[#E2FF66] rounded-2xl text-white font-sans text-base focus:outline-none transition-all placeholder:text-neutral-600 shadow-2xl focus:ring-1 focus:ring-[#E2FF66]/30"
+            className="w-full pl-11 sm:pl-14 pr-24 sm:pr-32 py-3.5 sm:py-4 bg-neutral-950 border border-neutral-800 focus:border-[#E2FF66] rounded-2xl text-white font-sans text-sm sm:text-base focus:outline-none transition-all placeholder:text-neutral-500 shadow-2xl focus:ring-1 focus:ring-[#E2FF66]/30"
             autoFocus
             autoComplete="off"
           />
 
-          <div className="absolute right-3 flex items-center space-x-2">
+          <div className="absolute right-2 sm:right-3 flex items-center space-x-1.5 sm:space-x-2">
             {isSuggesting && (
-              <Loader2 className="w-4 h-4 text-neutral-400 animate-spin mr-1" />
+              <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-400 animate-spin mr-0.5" />
             )}
             {searchQuery && (
               <button
@@ -450,7 +450,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   setSuggestions([]);
                   setShowSuggestions(false);
                 }}
-                className="p-1 text-neutral-500 hover:text-white"
+                className="p-1 text-neutral-400 hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -460,9 +460,9 @@ export const SearchView: React.FC<SearchViewProps> = ({
               whileTap={{ scale: 0.95 }}
               type="submit"
               disabled={isLoading || !searchQuery.trim()}
-              className="px-5 py-2.5 rounded-xl bg-white hover:bg-[#E2FF66] text-black font-mono text-xs font-bold transition-all disabled:opacity-40 shadow-md"
+              className="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-white hover:bg-[#E2FF66] text-black font-mono text-xs font-bold transition-all disabled:opacity-40 shadow-md cursor-pointer"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'SEARCH'}
+              {isLoading ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" /> : 'SEARCH'}
             </motion.button>
           </div>
         </form>
@@ -477,12 +477,12 @@ export const SearchView: React.FC<SearchViewProps> = ({
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
             className="absolute left-0 right-0 top-full mt-2 bg-[#0E0E0E]/98 backdrop-blur-2xl border border-neutral-800 rounded-2xl p-2 shadow-2xl overflow-hidden z-50 divide-y divide-neutral-900/60"
           >
-              <div className="px-3 py-2 flex items-center justify-between font-mono text-[10px] uppercase text-neutral-500 tracking-wider">
+              <div className="px-3 py-2 flex items-center justify-between font-mono text-[10px] uppercase text-neutral-400 tracking-wider">
                 <span className="flex items-center space-x-1.5">
                   <Sparkles className="w-3 h-3 text-[#E2FF66]" />
                   <span>LIVE MATCHES // CLICK TO PLAY DIRECTLY</span>
                 </span>
-                <span>ENTER TO SEARCH ALL</span>
+                <span className="hidden sm:inline">ENTER TO SEARCH ALL</span>
               </div>
 
               <div className="py-1 space-y-1 max-h-[380px] overflow-y-auto">
@@ -493,14 +493,14 @@ export const SearchView: React.FC<SearchViewProps> = ({
                       key={`sug-${item.id}-${idx}`}
                       onClick={() => handleSelectSuggestion(item)}
                       onMouseEnter={() => setHighlightedIndex(idx)}
-                      className={`group flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all ${
+                      className={`group flex items-center justify-between p-2 sm:p-2.5 rounded-xl cursor-pointer transition-all ${
                         isHighlighted
                           ? 'bg-neutral-800/90 border border-neutral-700/80 shadow-md'
                           : 'hover:bg-neutral-900/80 border border-transparent'
                       }`}
                     >
-                      <div className="flex items-center space-x-3 min-w-0 flex-1 pr-3">
-                        <div className="relative w-11 h-11 rounded-lg overflow-hidden bg-neutral-900 shrink-0">
+                      <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0 flex-1 pr-2 sm:pr-3">
+                        <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-lg overflow-hidden bg-neutral-900 shrink-0 border border-white/10">
                           <img
                             src={item.thumbnailUrl}
                             alt={item.title}
@@ -512,18 +512,22 @@ export const SearchView: React.FC<SearchViewProps> = ({
                           </div>
                         </div>
 
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-sans font-semibold text-xs sm:text-sm text-white group-hover:text-[#E2FF66] truncate transition-colors">
+                        {/* Song Name & Artist info */}
+                        <div className="min-w-0 flex-1 pr-1">
+                          <h4 
+                            className="font-sans font-bold text-xs sm:text-sm text-white group-hover:text-[#E2FF66] line-clamp-2 sm:truncate transition-colors leading-snug"
+                            title={item.title}
+                          >
                             {item.title}
                           </h4>
-                          <p className="font-mono text-[11px] text-neutral-400 truncate">
+                          <p className="font-mono text-[10px] sm:text-[11px] text-neutral-300 sm:text-neutral-400 truncate mt-0.5 font-medium">
                             {item.artist}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2 shrink-0">
-                        <span className="font-mono text-[10px] text-neutral-500 hidden sm:inline">
+                      <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
+                        <span className="font-mono text-[10px] text-neutral-400 hidden sm:inline">
                           {item.formattedDuration || '3:30'}
                         </span>
                         <button
@@ -531,7 +535,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                             e.stopPropagation();
                             onAddToQueue(item);
                           }}
-                          className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+                          className="min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
                           title="Add to queue"
                         >
                           <ListPlus className="w-3.5 h-3.5" />
@@ -541,7 +545,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                             e.stopPropagation();
                             onToggleFavorite(item);
                           }}
-                          className="p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-neutral-800 transition-colors"
+                          className="min-w-[32px] min-h-[32px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-neutral-800 transition-colors"
                           title="Like track"
                         >
                           <Heart className={`w-3.5 h-3.5 ${isFavorite(item.id) ? 'text-red-400 fill-current' : ''}`} />
@@ -553,11 +557,11 @@ export const SearchView: React.FC<SearchViewProps> = ({
               </div>
 
               <div className="pt-2 px-3 pb-1 flex items-center justify-between font-mono text-[11px] text-neutral-400">
-                <span>Press <kbd className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 rounded text-[10px] text-neutral-300">Enter</kbd> to execute full deep query</span>
+                <span className="hidden sm:inline">Press <kbd className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 rounded text-[10px] text-neutral-300">Enter</kbd> to execute full deep query</span>
                 <button
                   type="button"
                   onClick={() => executeSearch(searchQuery)}
-                  className="text-white hover:text-[#E2FF66] font-bold flex items-center space-x-1"
+                  className="text-white hover:text-[#E2FF66] font-bold flex items-center space-x-1 ml-auto sm:ml-0"
                 >
                   <span>SEE ALL RESULTS</span>
                   <ArrowRight className="w-3 h-3" />

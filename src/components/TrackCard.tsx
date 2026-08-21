@@ -93,13 +93,14 @@ export const TrackCard: React.FC<TrackCardProps> = ({
         <div className="min-w-0 flex-1 pr-2">
           <h4
             onClick={() => onPlay(track)}
-            className={`font-sans font-bold text-sm truncate cursor-pointer hover:underline ${
+            className={`font-sans font-bold text-sm line-clamp-2 cursor-pointer hover:underline leading-snug transition-colors ${
               isCurrent ? 'text-[#E2FF66]' : 'text-white'
             }`}
+            title={track.title}
           >
             {track.title}
           </h4>
-          <p className="font-mono text-xs text-neutral-400 truncate mt-0.5">
+          <p className="font-mono text-xs text-neutral-300 sm:text-neutral-400 truncate mt-1">
             {track.artist}
           </p>
         </div>
@@ -108,7 +109,7 @@ export const TrackCard: React.FC<TrackCardProps> = ({
           whileHover={{ scale: 1.15 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => onAddToQueue(track)}
-          className="p-1.5 rounded-lg text-neutral-500 hover:text-white hover:bg-neutral-800 transition-colors opacity-0 group-hover:opacity-100"
+          className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors opacity-90 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
           title="Add to queue"
         >
           <ListPlus className="w-4 h-4" />

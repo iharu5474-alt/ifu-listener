@@ -188,6 +188,22 @@ export function recordSkip(track: Track, playedSeconds: number, duration: number
 }
 
 /**
+ * Records when a track finishes playing completely.
+ */
+export function recordCompletion(track: Track) {
+  if (!track || !track.id) return;
+  const interactions = getStoredInteractions();
+  const current = interactions[track.id];
+  if (!current) return;
+
+  current.completionRate = 1;
+  current.listenDurationSeconds = current.totalDurationSeconds || track.duration || 210;
+  current.repeatPlays += 1;
+  interactions[track.id] = current;
+  saveInteractions(interactions);
+}
+
+/**
  * Records like/favorite toggle.
  */
 export function recordLike(track: Track, isLiked: boolean) {
@@ -453,14 +469,29 @@ export async function computePersonalizedRecommendations(
   customApiKey?: string,
   forceFresh = false
 ): Promise<RankedTrack[]> {
-  // Check cache if not forcing fresh
+  const profile = buildUserProfile();
+  const interactions = getStoredInteractions();
+  const dislikedIds = new Set(getDislikedTrackIds());
+
+  console.log('[ifu recommendation engine] Reading local user profile for recommendations:', {
+    totalListens: profile.totalListens,
+    topArtists: profile.topArtists,
+    topGenres: profile.topGenres,
+    topKeywords: profile.topKeywords,
+    averageCompletionRate: profile.averageCompletionRate,
+    totalSkips: profile.totalSkips,
+    totalCompletions: profile.totalCompletions
+  });
+
+  // Check cache only if not forcing fresh and profile has not changed recently
   if (!forceFresh) {
     try {
       const cached = localStorage.getItem(REC_CACHE_KEY);
       if (cached) {
         const parsed: { timestamp: number; tracks: RankedTrack[] } = JSON.parse(cached);
-        // Cache valid for 20 minutes unless user takes major actions
-        if (Date.now() - parsed.timestamp < 20 * 60 * 1000 && parsed.tracks.length > 0) {
+        // Cache valid for 8 minutes
+        if (Date.now() - parsed.timestamp < 8 * 60 * 1000 && parsed.tracks && parsed.tracks.length > 0) {
+          console.log('[ifu recommendation engine] Serving from recent cache:', parsed.tracks.length, 'tracks');
           return parsed.tracks;
         }
       }
@@ -469,56 +500,74 @@ export async function computePersonalizedRecommendations(
     }
   }
 
-  const profile = buildUserProfile();
-  const interactions = getStoredInteractions();
-  const dislikedIds = new Set(getDislikedTrackIds());
   const candidatePool: Map<string, Track> = new Map();
+  const seenTitleKeys: Set<string> = new Set();
 
-  // 1. Seed with Default Curated Tracks
+  const addCandidate = (track: Track) => {
+    if (!track || !track.id || dislikedIds.has(track.id)) return;
+    const normalizedKey = `${track.title.toLowerCase().replace(/[^a-z0-9]/g, '')}_${track.artist.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+    if (seenTitleKeys.has(normalizedKey)) return;
+    seenTitleKeys.add(normalizedKey);
+    candidatePool.set(track.id, track);
+  };
+
+  // 1. Seed with Curated Tracks
   for (const track of INITIAL_FEATURED_TRACKS) {
-    if (!dislikedIds.has(track.id)) {
-      candidatePool.set(track.id, track);
-    }
+    addCandidate(track);
   }
 
-  // 2. Fetch fresh candidates using top artists and genres via YouTube Search
+  // 2. Add any favorite tracks as similarity anchors
+  for (const fav of favorites.slice(0, 5)) {
+    addCandidate(fav);
+  }
+
+  // 3. Fetch fresh candidate tracks dynamically from YouTube Data API
   const searchQueries: string[] = [];
 
   if (profile.topArtists.length > 0) {
     searchQueries.push(`${profile.topArtists[0].artist} official audio`);
     if (profile.topArtists.length > 1) {
-      searchQueries.push(`${profile.topArtists[1].artist} song`);
+      searchQueries.push(`${profile.topArtists[1].artist} music`);
     }
   }
 
   if (profile.topGenres.length > 0) {
-    searchQueries.push(`${profile.topGenres[0].genre} music playlist 2026`);
-  } else if (searchQueries.length === 0) {
-    searchQueries.push('lofi chill beats aesthetic', 'ambient synthwave music');
+    searchQueries.push(`${profile.topGenres[0].genre} chill music 2026`);
   }
 
-  // Run up to 2 targeted queries in parallel to keep loading brisk
+  if (profile.topKeywords.length > 0) {
+    searchQueries.push(`${profile.topKeywords[0].keyword} audio`);
+  }
+
+  // If few/no queries, provide diverse aesthetic queries
+  if (searchQueries.length < 2) {
+    searchQueries.push('chillhop lofi beats aesthetic', 'synthwave electronic nocturnal');
+  }
+
+  // Run candidate queries
+  console.log('[ifu recommendation engine] Sourcing candidates with queries:', searchQueries);
+
   await Promise.all(
-    searchQueries.slice(0, 2).map(async (query) => {
+    searchQueries.slice(0, 3).map(async (query) => {
       try {
+        console.log(`[ifu recommendation engine] Firing YouTube candidate search query: "${query}"`);
         const res = await searchYouTubeTracks(query, customApiKey);
+        console.log(`[ifu recommendation engine] Raw YouTube Candidate API Response for "${query}":`, res);
+        
         if (res.tracks && res.tracks.length > 0) {
           for (const t of res.tracks.slice(0, 10)) {
-            if (!dislikedIds.has(t.id)) {
-              candidatePool.set(t.id, t);
-            }
+            addCandidate(t);
           }
         }
       } catch (err) {
-        console.warn('[ifu listener] Candidate generation search warning:', err);
+        console.warn('[ifu listener] Candidate generation query error:', err);
       }
     })
   );
 
-  // 3. Rank each candidate
+  // 4. Rank each candidate track with the multi-factor scoring formula
   const rankedList: RankedTrack[] = [];
   candidatePool.forEach((candidate) => {
-    // Skip if in disliked list
     if (dislikedIds.has(candidate.id)) return;
 
     const { score, reason, percentage, tags } = rankCandidateTrack(
@@ -537,9 +586,17 @@ export async function computePersonalizedRecommendations(
     });
   });
 
-  // 4. Sort by score descending
+  // 5. Sort by score descending and take top 16 distinct recommendations
   rankedList.sort((a, b) => b.score - a.score);
   const finalResults = rankedList.slice(0, 16);
+
+  console.log('[ifu recommendation engine] Successfully computed and ranked recommendations:', finalResults.map(r => ({
+    title: r.title,
+    artist: r.artist,
+    score: r.score,
+    matchScorePercentage: r.matchScorePercentage,
+    reason: r.matchReason
+  })));
 
   // Cache computed results
   try {
