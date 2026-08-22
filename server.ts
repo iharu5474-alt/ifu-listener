@@ -238,7 +238,7 @@ async function startServer() {
           message: 'YouTube Data API v3 is active and operational!'
         });
       } else {
-        console.error('[ifu listener server] YouTube API Key Test Failed:', JSON.stringify(data, null, 2));
+        console.warn('[ifu listener server] YouTube API Key Test Notice:', data?.error?.message || apiRes.statusText);
         const errObj = data.error || {};
         return res.json({
           configured: true,
@@ -472,6 +472,7 @@ async function startServer() {
         console.log(`[ifu listener server] YouTube Search Response HTTP ${searchRes.status}:`, JSON.stringify(searchData, null, 2));
 
         if (!searchRes.ok) {
+          console.warn(`[ifu listener server] YouTube API Key Notice (HTTP ${searchRes.status}):`, searchData?.error?.message || searchRes.statusText);
           const errObj = searchData.error || {};
           rawApiError = {
             status: searchRes.status,
@@ -546,7 +547,12 @@ async function startServer() {
       tracks: fallbackTracks,
       searchedWithKey: Boolean(resolvedKey),
       source: fallbackTracks.length > 0 ? 'public_search_engine' : 'none',
-      apiError: rawApiError
+      apiError: fallbackTracks.length > 0 ? null : rawApiError,
+      diagnostic: rawApiError ? {
+        message: rawApiError.message,
+        reason: rawApiError.reason,
+        status: rawApiError.status
+      } : undefined
     });
   });
 

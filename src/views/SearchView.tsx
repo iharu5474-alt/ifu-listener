@@ -163,8 +163,10 @@ export const SearchView: React.FC<SearchViewProps> = ({
 
       setResults(searchResult.tracks || []);
       setResultSource(searchResult.source);
-      if (searchResult.apiError) {
+      if (searchResult.apiError && (!searchResult.tracks || searchResult.tracks.length === 0)) {
         setLastApiError(searchResult.apiError);
+      } else {
+        setLastApiError(null);
       }
     } catch (err: any) {
       console.error('[ifu listener] Search unhandled exception:', err);

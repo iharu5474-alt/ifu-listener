@@ -70,16 +70,22 @@ export function useMusicLibrary() {
     [favorites]
   );
 
-  const toggleFavorite = useCallback((track: Track) => {
+  const toggleFavorite = useCallback((track: Track): boolean => {
+    let isNowLiked = false;
     setFavorites((prev) => {
       const exists = prev.some((t) => t.id === track.id);
       if (exists) {
+        isNowLiked = false;
         return prev.filter((t) => t.id !== track.id);
       } else {
+        isNowLiked = true;
         return [{ ...track, addedAt: Date.now() }, ...prev];
       }
     });
-  }, []);
+    // Check if was already in favorites to determine outcome
+    const wasFavorite = favorites.some((t) => t.id === track.id);
+    return !wasFavorite;
+  }, [favorites]);
 
   const createPlaylist = useCallback((title: string, description?: string, initialTracks?: Track[]): Playlist => {
     const newPlaylist: Playlist = {

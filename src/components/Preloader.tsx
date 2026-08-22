@@ -17,7 +17,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
   const handleFinish = () => {
     if (isFadingOut) return;
     setIsFadingOut(true);
-    console.log('[ifu listener] Splash video finishing / transitioning to app...');
+    console.log('[ifu listener] User initiated transition from splash video to main app...');
     try {
       sessionStorage.setItem('ifulistener_intro_played_v4', 'true');
     } catch {
@@ -32,13 +32,15 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
     console.log('[ifu listener] Splash Video mounting with source:', INTRO_VIDEO_URL);
     const video = videoRef.current;
     if (video) {
-      // Set essential attributes directly on the DOM element for strict mobile browser compatibility
+      // Set essential attributes directly on the DOM element for seamless looping and mobile browser compatibility
       video.muted = true;
       video.defaultMuted = true;
       video.playsInline = true;
+      video.loop = true;
       video.setAttribute('playsinline', '');
       video.setAttribute('webkit-playsinline', 'true');
       video.setAttribute('muted', '');
+      video.setAttribute('loop', '');
 
       const playPromise = video.play();
       if (playPromise !== undefined) {
@@ -52,13 +54,17 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
       }
     }
 
-    // Safety fallback: if video stalls or takes longer than 10s, smoothly finish
-    const timer = setTimeout(() => {
-      console.log('[ifu listener] Splash video safety timer triggered');
-      handleFinish();
-    }, 10000);
+    // Allow user to advance with any key press as well as clicking
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+        handleFinish();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
 
-    return () => clearTimeout(timer);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   return (
@@ -70,11 +76,12 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
       }`}
       style={{ backgroundColor: '#000000' }}
     >
-      {/* Fullscreen Video Element */}
+      {/* Fullscreen Video Element - Seamlessly Looping */}
       <video
         ref={videoRef}
         src={INTRO_VIDEO_URL}
         autoPlay
+        loop
         muted
         playsInline
         preload="auto"
@@ -83,13 +90,8 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
           setVideoLoaded(true);
         }}
         onPlay={() => console.log('[ifu listener] Splash video event: onPlay')}
-        onEnded={() => {
-          console.log('[ifu listener] Splash video event: onEnded');
-          handleFinish();
-        }}
         onError={(e) => {
           console.error('[ifu listener] Splash video error loading source:', e);
-          handleFinish();
         }}
         className="w-full h-full object-cover"
         style={{
@@ -107,7 +109,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-2">
             <span className="w-2 h-2 rounded-full bg-[#E2FF66] animate-ping" />
             <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-neutral-200">
-              AUDIO ARCHIVE // INITIALIZING
+              AUDIO ARCHIVE // READY
             </span>
           </div>
 
@@ -121,9 +123,10 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
         </div>
       </div>
 
-      {/* Tap anywhere to skip pill in Bottom Right */}
-      <div className="absolute bottom-6 right-6 z-20 px-4 py-2.5 min-h-[44px] rounded-full bg-black/75 backdrop-blur-md border border-white/25 text-white/90 hover:text-white text-xs font-mono tracking-wider uppercase transition-all hover:bg-black/90 hover:scale-105 flex items-center justify-center shadow-lg">
-        <span>TAP ANYWHERE TO SKIP ✕</span>
+      {/* Click / Tap anywhere to enter badge in Bottom Right */}
+      <div className="absolute bottom-6 right-6 z-20 px-5 py-3 min-h-[44px] rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-xl border border-white/30 text-white font-mono text-xs tracking-wider uppercase transition-all hover:scale-105 active:scale-95 flex items-center justify-center space-x-2 shadow-2xl">
+        <span className="w-2 h-2 rounded-full bg-[#E2FF66] animate-pulse" />
+        <span className="font-bold">CLICK OR TAP ANYWHERE TO ENTER ➔</span>
       </div>
     </div>
   );

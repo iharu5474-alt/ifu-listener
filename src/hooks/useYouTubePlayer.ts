@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PlayerState, PlayerStatus, RepeatMode, Track } from '../types';
+import { audioEngine } from '../services/audioEngine';
 
 declare global {
   interface Window {
@@ -243,6 +244,14 @@ export function useYouTubePlayer({ onTrackEnd, onErrorNotification, onError }: U
 
   // Periodic position sync - optimized for long-term continuous streaming
   useEffect(() => {
+    audioEngine.updatePlaybackState(
+      playerState.isPlaying,
+      playerState.currentTime,
+      playerState.isMuted ? 0 : playerState.volume,
+      playerState.playbackRate,
+      playerState.currentTrack?.id
+    );
+
     if (!playerState.isPlaying) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -261,6 +270,13 @@ export function useYouTubePlayer({ onTrackEnd, onErrorNotification, onError }: U
             currentTime,
             duration: duration && duration > 0 ? duration : prev.duration
           }));
+          audioEngine.updatePlaybackState(
+            true,
+            currentTime,
+            playerState.isMuted ? 0 : playerState.volume,
+            playerState.playbackRate,
+            playerState.currentTrack?.id
+          );
         } catch {
           // ignore
         }
@@ -273,7 +289,14 @@ export function useYouTubePlayer({ onTrackEnd, onErrorNotification, onError }: U
         intervalRef.current = null;
       }
     };
-  }, [playerState.isPlaying]);
+  }, [
+    playerState.isPlaying,
+    playerState.currentTime,
+    playerState.volume,
+    playerState.isMuted,
+    playerState.playbackRate,
+    playerState.currentTrack?.id
+  ]);
 
   // Controls API
   const playTrack = useCallback((track: Track, newQueue?: Track[], playlistId?: string) => {

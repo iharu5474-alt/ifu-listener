@@ -98,7 +98,7 @@ export async function searchYouTubeTracks(
     console.log('[ifu listener client] YouTube Search Raw Response:', data);
 
     if (data.apiError) {
-      console.error('[ifu listener client] YouTube API returned diagnostic error:', data.apiError);
+      console.warn('[ifu listener client] YouTube API diagnostic note:', data.apiError);
     }
 
     return {

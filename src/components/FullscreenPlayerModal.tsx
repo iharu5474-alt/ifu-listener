@@ -59,10 +59,12 @@ export const FullscreenPlayerModal: React.FC<FullscreenPlayerModalProps> = ({
   onSetPlaybackRate,
   onPlaySuggestedTrack
 }) => {
-  if (!isOpen || !playerState?.currentTrack) return null;
+  const currentTrack = playerState?.currentTrack || null;
+  const dynamicTheme = useDynamicTheme(currentTrack);
+
+  if (!isOpen || !currentTrack || !playerState) return null;
 
   const {
-    currentTrack = null,
     isPlaying = false,
     currentTime = 0,
     duration = 0,
@@ -75,9 +77,7 @@ export const FullscreenPlayerModal: React.FC<FullscreenPlayerModalProps> = ({
     queue = [],
     suggestedTrack = null,
     status = 'unstarted'
-  } = playerState || {};
-
-  const dynamicTheme = useDynamicTheme(currentTrack);
+  } = playerState;
   const progressPercent = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
   const upcomingTrack = queue.length > 0 ? queue[0] : autoplay ? suggestedTrack : null;

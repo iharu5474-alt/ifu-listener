@@ -65,7 +65,7 @@ export interface SearchResultData {
   apiError?: ApiError | null;
 }
 
-export type ActiveTab = 'discover' | 'search' | 'playlists' | 'favorites' | 'queue' | 'visualizer';
+export type ActiveTab = 'home' | 'recommended' | 'library' | 'playlists' | 'favorites' | 'history' | 'search' | 'queue' | 'visualizer';
 
 export interface TrackInteraction {
   trackId: string;
