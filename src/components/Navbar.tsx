@@ -76,8 +76,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => setActiveTab('home')}
             className="flex items-center space-x-2.5 sm:space-x-3 text-left group cursor-pointer min-w-0"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white text-black flex items-center justify-center font-display font-black text-sm tracking-tighter transition-all group-hover:scale-105 group-hover:bg-[#E2FF66] shadow-md shrink-0">
-              ifu
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden bg-black border border-white/20 flex items-center justify-center transition-all group-hover:scale-105 group-hover:border-[#E2FF66] shadow-md shrink-0">
+              <img
+                src="/favicon.png"
+                alt="ifu listener"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
             </div>
             <div className="min-w-0">
               <span className="font-display font-black text-lg sm:text-xl tracking-tight text-white block leading-none group-hover:text-[#E2FF66] transition-colors drop-shadow-sm truncate">

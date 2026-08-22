@@ -1,6 +1,6 @@
 {
   "name": "ifu listener",
-  "description": "A minimal, motion-forward music player streaming directly from YouTube audio.",
+  "description": "Sonic Exploration Engine & Music Player with real-time cloud synchronization, smart algorithmic recommendations, and kinetic audio visualizers.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
