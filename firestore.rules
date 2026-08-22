@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Connection test document
+    match /system/connection_test {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // User collections
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /playlists/{playlistId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /favorites/{trackId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /history/{trackId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /tasteProfile/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

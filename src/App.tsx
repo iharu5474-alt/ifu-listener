@@ -3,6 +3,8 @@ import { ActiveTab, Playlist, Track } from './types';
 import { useYouTubePlayer } from './hooks/useYouTubePlayer';
 import { useMusicLibrary } from './hooks/useMusicLibrary';
 import { useRecommendations } from './hooks/useRecommendations';
+import { useFirebaseAuth } from './hooks/useFirebaseAuth';
+import { saveHistoryTrackToFirestore, saveTasteProfileToFirestore } from './services/firebase';
 import { fetchRelatedYouTubeTracks } from './services/youtubeApi';
 import { Navbar } from './components/Navbar';
 import { PlayerBar } from './components/PlayerBar';
@@ -71,7 +73,30 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Music library hook
+  // Firebase Authentication & Cloud Sync
+  const { user, loading: authLoading, signIn, signOut } = useFirebaseAuth();
+
+  const handleSignIn = async () => {
+    try {
+      const loggedUser = await signIn();
+      if (loggedUser) {
+        addToast('success', 'Connected to Cloud', `Signed in as ${loggedUser.displayName || 'User'}. Playlists & favorites synced!`);
+      }
+    } catch (err: any) {
+      addToast('error', 'Sign In Notice', err.message || 'Could not sign in with Google');
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      addToast('info', 'Signed Out', 'Cloud sync disconnected. Local cache active.');
+    } catch (err: any) {
+      addToast('error', 'Sign Out Notice', err.message || 'Could not sign out');
+    }
+  };
+
+  // Music library hook (synced with Firebase Firestore when logged in)
   const {
     favorites,
     allPlaylists,
@@ -82,7 +107,7 @@ export default function App() {
     addTrackToPlaylist,
     removeTrackFromPlaylist,
     importYouTubePlaylist
-  } = useMusicLibrary();
+  } = useMusicLibrary(user);
 
   // Recommendation Engine hook
   const {
@@ -336,6 +361,9 @@ export default function App() {
   const handlePlaySingleTrack = (track: Track, newQueue?: Track[], playlistId?: string) => {
     playTrack(track, newQueue, playlistId);
     trackPlayStart(track);
+    if (user) {
+      saveHistoryTrackToFirestore(user.uid, track).catch(() => {});
+    }
   };
 
   const handlePlayPlaylist = (playlist: Playlist, shuffle = false) => {
@@ -348,6 +376,9 @@ export default function App() {
     const rest = list.slice(1);
     playTrack(firstTrack, rest, playlist.id);
     trackPlayStart(firstTrack);
+    if (user) {
+      saveHistoryTrackToFirestore(user.uid, firstTrack).catch(() => {});
+    }
     addToast('info', 'Now Playing Playlist', `${playlist.title} (${playlist.tracks.length} tracks)`);
   };
 
@@ -427,6 +458,10 @@ export default function App() {
         favoritesCount={favorites.length}
         onOpenImportModal={() => setIsImportModalOpen(true)}
         onOpenRecentlyPlayed={() => setIsRecentlyPlayedOpen(true)}
+        user={user}
+        authLoading={authLoading}
+        onSignIn={handleSignIn}
+        onSignOut={handleSignOut}
       />
 
       {/* 5. Main Application Content Area */}

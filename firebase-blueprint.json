@@ -1,0 +1,119 @@
+{
+  "entities": {
+    "UserPlaylist": {
+      "title": "UserPlaylist",
+      "description": "User created or imported playlist with list of songs",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique playlist identifier"
+        },
+        "title": {
+          "type": "string",
+          "description": "Name of the playlist",
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "description": "Playlist summary",
+          "maxLength": 1000
+        },
+        "coverUrl": {
+          "type": "string",
+          "description": "Playlist artwork thumbnail"
+        },
+        "tracks": {
+          "type": "array",
+          "description": "Ordered array of song objects"
+        },
+        "isCustom": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "number"
+        },
+        "youtubePlaylistId": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "title"]
+    },
+    "UserFavorite": {
+      "title": "UserFavorite",
+      "description": "Liked song in user library",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "YouTube video ID"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "artist": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "duration": {
+          "type": "number"
+        },
+        "formattedDuration": {
+          "type": "string"
+        },
+        "thumbnailUrl": {
+          "type": "string"
+        },
+        "addedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["id", "title", "artist"]
+    },
+    "UserHistoryTrack": {
+      "title": "UserHistoryTrack",
+      "description": "Recently played song entry",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "artist": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "thumbnailUrl": {
+          "type": "string"
+        },
+        "playedAt": {
+          "type": "number"
+        }
+      },
+      "required": ["id", "title"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/playlists/{playlistId}": {
+      "schema": "UserPlaylist",
+      "description": "User created and imported playlists"
+    },
+    "/users/{userId}/favorites/{trackId}": {
+      "schema": "UserFavorite",
+      "description": "User liked and favorited tracks"
+    },
+    "/users/{userId}/history/{trackId}": {
+      "schema": "UserHistoryTrack",
+      "description": "Recently played tracks history"
+    },
+    "/users/{userId}/tasteProfile/{docId}": {
+      "schema": "object",
+      "description": "User algorithmic recommendations interest and taste profile"
+    }
+  }
+}
