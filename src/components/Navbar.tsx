@@ -1,7 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { ActiveTab, PlayerState } from '../types';
-import { Search, Sparkles, FolderHeart, Activity, Plus, Menu, X, History, Cloud, CloudCheck, LogIn, LogOut, User as UserIcon, CheckCircle2 } from 'lucide-react';
+import {
+  Search,
+  Sparkles,
+  FolderHeart,
+  Activity,
+  Plus,
+  Menu,
+  X,
+  History,
+  UserPlus,
+  LogOut,
+  User as UserIcon,
+  CheckCircle2
+} from 'lucide-react';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -54,30 +67,30 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/[0.08] backdrop-blur-2xl border-b border-white/20 transition-colors shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-2">
         
         {/* Brand Logo & Live Engine Badge */}
-        <div className="flex items-center space-x-3 sm:space-x-4">
+        <div className="flex items-center space-x-2.5 sm:space-x-4 min-w-0 shrink">
           <button
             id="nav-brand-logo"
             onClick={() => setActiveTab('home')}
-            className="flex items-center space-x-3 text-left group cursor-pointer"
+            className="flex items-center space-x-2.5 sm:space-x-3 text-left group cursor-pointer min-w-0"
           >
-            <div className="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center font-display font-black text-sm tracking-tighter transition-all group-hover:scale-105 group-hover:bg-[#E2FF66] shadow-md">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white text-black flex items-center justify-center font-display font-black text-sm tracking-tighter transition-all group-hover:scale-105 group-hover:bg-[#E2FF66] shadow-md shrink-0">
               ifu
             </div>
-            <div>
-              <span className="font-display font-black text-xl tracking-tight text-white block leading-none group-hover:text-[#E2FF66] transition-colors drop-shadow-sm">
+            <div className="min-w-0">
+              <span className="font-display font-black text-lg sm:text-xl tracking-tight text-white block leading-none group-hover:text-[#E2FF66] transition-colors drop-shadow-sm truncate">
                 ifu listener
               </span>
-              <span className="font-mono text-[9px] tracking-[0.25em] text-neutral-300 block mt-0.5 uppercase font-medium">
+              <span className="font-mono text-[9px] tracking-[0.2em] text-neutral-300 hidden sm:block mt-0.5 uppercase font-medium truncate">
                 SONIC EXPLORATION ENGINE
               </span>
             </div>
           </button>
 
           {/* Live Status Pill */}
-          <div className="hidden xl:flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 border border-white/20">
+          <div className="hidden xl:flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 shrink-0">
             <span
               className={`w-2 h-2 rounded-full ${
                 playerState?.isPlaying ? 'bg-[#E2FF66] animate-ping' : 'bg-neutral-400'
@@ -117,7 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Header Actions: Recently Played + Import + Firebase Cloud Auth */}
-        <div className="hidden md:flex items-center space-x-2.5">
+        <div className="hidden md:flex items-center space-x-2.5 shrink-0">
           {/* Recently Played Button directly in top nav */}
           <button
             id="nav-btn-recently-played"
@@ -141,16 +154,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {/* Firebase Authentication & Cloud Sync Widget */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative shrink-0" ref={dropdownRef}>
             {authLoading ? (
-              <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse border border-white/20" />
+              <div className="w-10 h-10 rounded-full bg-white/10 animate-pulse border border-white/20" />
             ) : user ? (
               <div>
                 <button
                   id="btn-user-profile-menu"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   className="flex items-center space-x-2 p-1.5 pr-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 transition-all text-white cursor-pointer group shadow-sm"
-                  title="Firebase Cloud Account"
+                  title="User Account"
                 >
                   {user.photoURL ? (
                     <img
@@ -218,68 +231,67 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 id="btn-google-sign-in"
                 onClick={onSignIn}
-                className="flex items-center space-x-2 px-3.5 py-2 rounded-full bg-[#E2FF66] hover:bg-[#d6f552] text-black font-mono text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-md cursor-pointer"
-                title="Sign in with Google to sync your playlists and favorites across devices"
+                className="flex items-center space-x-2 px-4 py-2.5 rounded-full bg-[#E2FF66] hover:bg-[#d6f552] text-black font-mono text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-[#E2FF66]/25 border border-[#E2FF66] cursor-pointer"
+                title="Sign Up with Google"
               >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>CLOUD SYNC</span>
+                <div className="w-5 h-5 rounded-full bg-black text-[#E2FF66] flex items-center justify-center shrink-0">
+                  <UserPlus className="w-3 h-3" />
+                </div>
+                <span>Sign Up</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Mobile Action Controls */}
-        <div className="flex md:hidden items-center space-x-1.5">
-          {/* User Auth quick mobile button */}
+        {/* Mobile Action Controls - Fixed spacing to prevent any overlapping */}
+        <div className="flex md:hidden items-center space-x-2 shrink-0">
+          {/* User Sign Up / Profile Round Icon Button */}
           {user ? (
             <button
+              id="btn-mobile-user-profile"
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="min-w-[38px] min-h-[38px] flex items-center justify-center rounded-xl bg-white/10 text-white border border-white/20 cursor-pointer"
-              title="User Account"
+              className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-[#E2FF66] text-black flex items-center justify-center p-0.5 border-2 border-[#E2FF66] shadow-md shadow-[#E2FF66]/20 transition-transform active:scale-90 cursor-pointer overflow-hidden shrink-0"
+              title={user.displayName || 'User Account'}
             >
               {user.photoURL ? (
                 <img
                   src={user.photoURL}
                   alt={user.displayName || ''}
-                  className="w-6 h-6 rounded-full"
+                  className="w-full h-full object-cover rounded-full"
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <UserIcon className="w-4 h-4 text-[#E2FF66]" />
+                <span className="font-bold text-xs">
+                  {user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
+                </span>
               )}
             </button>
           ) : (
             <button
+              id="btn-mobile-signup"
               onClick={onSignIn}
-              className="min-w-[38px] min-h-[38px] flex items-center justify-center p-2 rounded-xl bg-[#E2FF66] text-black font-bold cursor-pointer"
-              title="Sign In with Google"
+              className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-[#E2FF66] hover:bg-[#d6f552] text-black flex items-center justify-center font-bold shadow-lg shadow-[#E2FF66]/30 border border-white/20 transition-transform active:scale-90 cursor-pointer shrink-0"
+              title="Sign Up"
             >
-              <LogIn className="w-4 h-4" />
+              <UserPlus className="w-4 h-4 text-black stroke-[2.5]" />
             </button>
           )}
 
+          {/* Recently Played Round Button */}
           <button
             id="btn-mobile-recent"
             onClick={onOpenRecentlyPlayed}
-            className="min-w-[38px] min-h-[38px] flex items-center justify-center p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white border border-white/20 transition-all cursor-pointer"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-white/10 hover:bg-white/20 active:scale-90 text-white border border-white/20 flex items-center justify-center transition-all cursor-pointer shrink-0"
             title="Recently Played"
           >
             <History className="w-4 h-4 text-[#E2FF66]" />
           </button>
 
-          <button
-            id="btn-mobile-import"
-            onClick={onOpenImportModal}
-            className="min-w-[38px] min-h-[38px] flex items-center justify-center p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white border border-white/20 transition-all cursor-pointer"
-            title="Import YouTube Playlist"
-          >
-            <Plus className="w-4 h-4 text-white" />
-          </button>
-
+          {/* Mobile Menu Toggle Button */}
           <button
             id="btn-mobile-menu-toggle"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="min-w-[38px] min-h-[38px] flex items-center justify-center p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white border border-white/20 transition-all cursor-pointer"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-white/10 hover:bg-white/20 active:scale-90 text-white border border-white/20 flex items-center justify-center transition-all cursor-pointer shrink-0"
             title="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -361,14 +373,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {!user && (
               <button
+                id="btn-drawer-signup"
                 onClick={() => {
                   onSignIn();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full min-h-[48px] flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-mono text-xs text-black bg-[#E2FF66] hover:bg-[#d6f552] transition-all cursor-pointer font-bold"
+                className="w-full min-h-[48px] flex items-center justify-center space-x-2.5 px-4 py-3 rounded-2xl font-mono text-xs text-black bg-[#E2FF66] hover:bg-[#d6f552] transition-all cursor-pointer font-bold shadow-lg shadow-[#E2FF66]/20 border border-[#E2FF66]"
               >
-                <LogIn className="w-4 h-4" />
-                <span>SIGN IN WITH GOOGLE (CLOUD SYNC)</span>
+                <UserPlus className="w-4 h-4" />
+                <span>SIGN UP WITH GOOGLE</span>
               </button>
             )}
           </div>
@@ -377,3 +390,4 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
+
